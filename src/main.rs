@@ -40,7 +40,7 @@ fn main() {
     //Get args / gcode file path from OrcaSlicer
     let args: Vec<String> = env::args().collect();
     if args.len() < 2 {
-        eprintln!("Usage: post_processor <gcode filename>");
+        eprintln!("Usage: post_processor <gcode filepath>");
         std::process::exit(1);
     }
 
@@ -54,8 +54,8 @@ fn main() {
             let line = line.unwrap();
 
             for p in TARGETED_PROPERTIES.iter() {
-                if line.contains(&format!("{} = ", p)) { //Check each line for properties we care about
-                    let value = line.clone().split("=").nth(1).unwrap_or("").trim().to_string(); //Rust is a weird f*cking language
+                if line.starts_with(&format!("; {} = ", p)) { //Check each line for properties we care about
+                    let value = line.clone().split("=").last().unwrap_or("").trim().to_string(); //Rust is a weird f*cking language
                     gcode_properties.insert(p.to_string(), value); //Add the property to the hashmap
                 }
             }
@@ -85,7 +85,7 @@ fn main() {
                 HumanName : human_name,
                 Email : email,
                 PrinterName : {
-                    let full_string : String = gcode_properties[TARGETED_PROPERTIES[3]].clone();
+                    let full_string : String = gcode_properties[TARGETED_PROPERTIES[2]].clone();
                     let printer_type: String = full_string.split("(").nth(0).unwrap_or("").trim().to_string();
                     let printer_number: String = full_string.split("#").nth(1).unwrap_or("").split(" ").nth(0).unwrap().trim().to_string();
                     let printer_name: String = full_string.split("#").nth(1).unwrap_or("").split_whitespace().skip(1).collect::<Vec<&str>>().join(" ").trim().to_string();
