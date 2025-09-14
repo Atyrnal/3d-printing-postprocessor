@@ -7,8 +7,11 @@ use std::io::{BufRead, BufReader};
 use std::rc::Rc;
 use std::cell::RefCell;
 use chrono::Local;
+use slint::Weak;
 use uuid::Uuid;
+use regex::Regex;
 
+//const emailRegex = "[-A-Za-z0-9!#$%&'*+/=?^_`{|}~]+(?:\.[-A-Za-z0-9!#$%&'*+/=?^_`{|}~]+)*@(?:[A-Za-z0-9](?:[-A-Za-z0-9]*[A-Za-z0-9])?\.)+[A-Za-z0-9](?:[-A-Za-z0-9]*[A-Za-z0-9])?"
 
 
 slint::include_modules!();
@@ -86,15 +89,18 @@ fn main() {
     match gui(gui_info) {
         Ok((human_name, email, filament_owner)) => {
             print = Print {
-                HumanName : human_name,
-                Email : email,
+                HumanName : human_name.trim().to_string(),
+                Email : email.trim().to_string(),
                 PrinterName : {
                     let full_string : String = gcode_properties[TARGETED_PROPERTIES[2]].clone();
+
                     let printer_type: String = full_string.split("(").nth(0).unwrap_or("").trim().to_string();
                     let printer_number: String = full_string.split("#").nth(1).unwrap_or("").split(" ").nth(0).unwrap().trim().to_string();
                     let printer_name: String = full_string.split("#").nth(1).unwrap_or("").split_whitespace().skip(1).collect::<Vec<&str>>().join(" ").trim().to_string();
 
-                    format!("{} #{} - {}", printer_type, printer_number, printer_name)
+                    let output : String = format!("{} #{} - {}", printer_type, printer_number, printer_name);
+                    let printer_regex = Regex::new(r"^[A-Za-z0-9 ]+\s+#[0-9]+\s+-[A-Za-z0-9 ]+$").unwrap();
+                    if printer_regex.is_match(&output) { output } else { full_string }
                 },
                 FileName : {
                     /*let filepath: String = gcode_path.clone();
@@ -103,7 +109,7 @@ fn main() {
                     gcode_properties[TARGETED_PROPERTIES[6]].clone()
                 },
                 FilamentType : gcode_properties[TARGETED_PROPERTIES[1]].clone(),
-                FilamentOwner : filament_owner,
+                FilamentOwner : if filament_owner == "Personal" { "Personal".to_string() } else { "Makerspace".to_string() },
                 FilamentWeight : format!("{}g", gcode_properties[TARGETED_PROPERTIES[0]]),
                 Time : Local::now().format("%b %e, %Y, %I:%M:%S %p").to_string(),
                 UUID : Uuid::new_v4().to_string(),
@@ -126,6 +132,9 @@ fn main() {
 fn gui(info : PrintInfo) -> Result<(String, String, String), slint::PlatformError> {
     let app = AppWindow::new().unwrap();
 
+    let name_regex : Regex = Regex::new(r"^[A-Za-z\. ]+$").unwrap();
+    let email_regex : Regex = Regex::new(r"^[-A-Za-z0-9!#$%&'*+/=?^_`{|}~]+(?:\.[-A-Za-z0-9!#$%&'*+/=?^_`{|}~]+)*@umass\.edu$").unwrap();
+    
     let result : Rc<RefCell<Option<(String, String, String)>>> = Rc::new(RefCell::new(None)); 
 
     //Pass print info to GUI
@@ -138,16 +147,40 @@ fn gui(info : PrintInfo) -> Result<(String, String, String), slint::PlatformErro
 
 
     app.on_sumbit({
-        let app_weak = app.as_weak();
-        let result_clone = result.clone();
+        let app_weak: Weak<AppWindow> = app.as_weak();
+        let result_clone: Rc<RefCell<Option<(String, String, String)>>> = result.clone();
         move |human_name : slint::SharedString, email : slint::SharedString, filament_owner : slint::SharedString| {
-            let app = app_weak.unwrap();
-            *result_clone.borrow_mut() = Some((
-                human_name.to_string(), 
-                email.to_string(), 
-                filament_owner.to_string()
-            ));
-            let _ = app.hide();
+            let app: AppWindow = app_weak.unwrap();
+
+            let mut errors: bool = false;
+
+            if !name_regex.is_match(&human_name.to_string()) {
+                errors = true;
+                //Handle invalid name error
+                app.set_name_invalid(true);
+            } else {
+                app.set_name_invalid(false);
+            }
+            if !email_regex.is_match(&email.to_string()) {
+                errors = true;
+                //Handle invalid email error
+                app.set_email_invalid(true);
+            } else {
+                app.set_email_invalid(false);
+            }
+            if &filament_owner.to_string() != "Makerspace" && &filament_owner.to_string() != "Personal" {
+                //Shoudl be impossible??
+                //Leave handling to main() 
+            }
+            
+            if !errors {
+                *result_clone.borrow_mut() = Some((
+                    human_name.to_string(), 
+                    email.to_string(), 
+                    filament_owner.to_string()
+                ));
+                let _ = app.hide();
+            }
         }
     });
 

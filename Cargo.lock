@@ -3311,6 +3311,7 @@ name = "post_processor"
 version = "0.1.0"
 dependencies = [
  "chrono",
+ "regex",
  "slint",
  "slint-build",
  "uuid",

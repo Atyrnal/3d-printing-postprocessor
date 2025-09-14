@@ -13,6 +13,9 @@ export component AppWindow inherits Window{
     in property<string> print_time : "Failed to load Duration";
     in property<string> filament_weight : "Failed to load Weight";
 
+    in property <bool> name_invalid : false;
+    in property <bool> email_invalid : false;
+
     callback sumbit(string, string, string);
 
     VerticalLayout {
@@ -27,12 +30,32 @@ export component AppWindow inherits Window{
             spacing: 20px;
             VerticalLayout {
                 width : 50%;
-                spacing:10px;
-                human_name := LineEdit {
-                    placeholder-text: "Full Name";
+                spacing:5px;
+                VerticalLayout {
+                    spacing : 3px;
+                    padding : 0px;
+                    human_name := LineEdit {
+                        placeholder-text: "Full Name";
+                    }
+                    Text {
+                        visible : name_invalid;
+                        text : "Invalid name (alphabetic characters only)";
+                        color : #dc4040;
+                        horizontal-alignment: left;
+                    }
                 }
-                email := LineEdit {
-                    placeholder-text: "UMass Email";
+                VerticalLayout {
+                    spacing : 3px;
+                    padding : 0px;
+                    email := LineEdit {
+                        placeholder-text: "UMass Email";
+                    }
+                    Text {
+                        visible : email_invalid;
+                        text : "Invalid UMass email address";
+                        color : #dc4040;
+                        horizontal-alignment: left;
+                    }
                 }
 
                 filament_owner := HorizontalBox {

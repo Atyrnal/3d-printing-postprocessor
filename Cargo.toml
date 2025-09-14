@@ -7,6 +7,7 @@ edition = "2024"
 slint = "1.13.1"
 chrono = "0.4.42"
 uuid = { version = "1.18.1", features = ["v4"] }
+regex = "1.11.2"
 
 [build-dependencies]
 slint-build = "1.13.1"
