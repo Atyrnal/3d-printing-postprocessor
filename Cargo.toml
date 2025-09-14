@@ -4,3 +4,9 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
+slint = "1.13.1"
+chrono = "0.4.42"
+uuid = { version = "1.18.1", features = ["v4"] }
+
+[build-dependencies]
+slint-build = "1.13.1"

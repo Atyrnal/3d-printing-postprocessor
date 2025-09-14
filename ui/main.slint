@@ -1,0 +1,25 @@
+import { LineEdit, Button } from "std-widgets.slint";
+
+export component AppWindow inherits Window{
+
+    callback sumbit(string, string, string);
+
+    VerticalLayout {
+        spacing : 20px;
+        padding : 50px;
+
+        human_name := LineEdit {
+            placeholder-text: "Full Name";
+        }
+        email := LineEdit {
+            placeholder-text: "UMass Email";
+        }
+
+        sumbit_button := Button {
+            text: "Submit";
+            clicked => {
+                root.sumbit(human_name.text, email.text, "Makerspace");
+            }
+        }
+    }
+}
