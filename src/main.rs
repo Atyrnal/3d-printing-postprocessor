@@ -9,7 +9,7 @@ use uuid::Uuid;
 
 slint::include_modules!();
 
-const TARGETED_PROPERTIES : [&str; 6] = ["total filament used [g]", "filament_type", "printer_settings_id", "estimated printing time (normal mode)", "filament_settings_id", "print_settings_id"];
+const TARGETED_PROPERTIES : [&str; 7] = ["total filament used [g]", "filament_type", "printer_settings_id", "estimated printing time (normal mode)", "filament_settings_id", "print_settings_id", "job_name"];
 
 #[allow(non_snake_case)]
 #[derive(Debug)]
@@ -55,7 +55,7 @@ fn main() {
 
             for p in TARGETED_PROPERTIES.iter() {
                 if line.contains(&format!("{} = ", p)) { //Check each line for properties we care about
-                    let value = line.clone().split("=").nth(1).unwrap().trim().to_string(); //Rust is a weird f*cking language
+                    let value = line.clone().split("=").nth(1).unwrap_or("").trim().to_string(); //Rust is a weird f*cking language
                     gcode_properties.insert(p.to_string(), value); //Add the property to the hashmap
                 }
             }
@@ -70,9 +70,10 @@ fn main() {
         filament_settings: gcode_properties[TARGETED_PROPERTIES[4]].clone(), 
         print_settings: gcode_properties[TARGETED_PROPERTIES[5]].clone(), 
         filename: {
-            let filepath: String = gcode_path.clone();
+            /*let filepath: String = gcode_path.clone();
             let fp_split = filepath.split("/").last().unwrap_or("").trim().split(".");
-            fp_split.clone().take(fp_split.count()-1).collect::<Vec<&str>>().join(".").trim().to_string()
+            fp_split.clone().take(fp_split.count()-1).collect::<Vec<&str>>().join(".").trim().to_string()*/
+            gcode_properties[TARGETED_PROPERTIES[6]].clone() //Get from modified G-Code via preset including {input_filename_base}
         }, 
         filament_weight: format!("{}g",gcode_properties[TARGETED_PROPERTIES[0]].clone()), 
         print_time: gcode_properties[TARGETED_PROPERTIES[3]].clone()
@@ -92,9 +93,10 @@ fn main() {
                     format!("{} #{} - {}", printer_type, printer_number, printer_name)
                 },
                 FileName : {
-                    let filepath: String = gcode_path.clone();
+                    /*let filepath: String = gcode_path.clone();
                     let fp_split = filepath.split("/").last().unwrap_or("").trim().split(".");
-                    fp_split.clone().take(fp_split.count()-1).collect::<Vec<&str>>().join(".").trim().to_string()
+                    fp_split.clone().take(fp_split.count()-1).collect::<Vec<&str>>().join(".").trim().to_string()*/
+                    gcode_properties[TARGETED_PROPERTIES[6]].clone()
                 },
                 FilamentType : gcode_properties[TARGETED_PROPERTIES[1]].clone(),
                 FilamentOwner : filament_owner,
