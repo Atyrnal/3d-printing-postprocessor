@@ -15,8 +15,9 @@ export component AppWindow inherits Window{
 
     in property <bool> name_invalid : false;
     in property <bool> email_invalid : false;
+    in property <bool> pin_invalid : false;
 
-    callback sumbit(string, string, string);
+    callback sumbit(string, string, string, string);
 
     VerticalLayout {
         spacing : 10px;
@@ -103,6 +104,24 @@ export component AppWindow inherits Window{
                         }
                     }
                 }
+                Rectangle {
+
+                }
+                VerticalLayout {
+                    width : 50%;
+                    spacing : 3px;
+                    padding : 0px;
+                    staff_pin := LineEdit {
+                        placeholder-text: "Staff PIN";
+                        input-type: password;
+                    }
+                    Text {
+                        visible : pin_invalid;
+                        text : "Invalid PIN";
+                        color : #dc4040;
+                        horizontal-alignment: left;
+                    }
+                }
             }
             VerticalLayout {
                 spacing: 5px;
@@ -141,12 +160,16 @@ export component AppWindow inherits Window{
                     wrap: word-wrap;
                     color : #a29e9e;
                 }
-            }
-        }
-        sumbit_button := Button {
-            text: "Submit";
-            clicked => {
-                root.sumbit(human_name.text, email.text, filament_owner.selected_option);
+                sumbit_button := Button {
+                    text: "Submit";
+                    enabled: staff_pin.text.character-count >= 4;
+                    clicked => {
+                        root.sumbit(human_name.text, email.text, filament_owner.selected_option, staff_pin.text);
+                    }
+                }
+                Text {
+                    font-size: 4pt;
+                }
             }
         }
     }

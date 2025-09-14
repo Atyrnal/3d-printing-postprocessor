@@ -51,6 +51,8 @@ fn main() {
         std::process::exit(1);
     }
 
+    let staff_pins : Vec<String> = vec!["1234".to_string()];
+
     let gcode_path = &args[1];
     println!("Processing gcode file: {}", gcode_path);
     let mut gcode_properties: HashMap<String, String> = HashMap::new();
@@ -86,8 +88,8 @@ fn main() {
         print_time: gcode_properties[TARGETED_PROPERTIES[3]].clone()
     };
 
-    match gui(gui_info) {
-        Ok((human_name, email, filament_owner)) => {
+    match gui(gui_info, staff_pins) {
+        Ok((human_name, email, filament_owner, staff_pin )) => {
             print = Print {
                 HumanName : human_name.trim().to_string(),
                 Email : email.trim().to_string(),
@@ -129,13 +131,13 @@ fn main() {
 
 }
 
-fn gui(info : PrintInfo) -> Result<(String, String, String), slint::PlatformError> {
+fn gui(info : PrintInfo, pins : Vec<String>) -> Result<(String, String, String, String), slint::PlatformError> {
     let app = AppWindow::new().unwrap();
 
     let name_regex : Regex = Regex::new(r"^[A-Za-z\. ]+$").unwrap();
     let email_regex : Regex = Regex::new(r"^[-A-Za-z0-9!#$%&'*+/=?^_`{|}~]+(?:\.[-A-Za-z0-9!#$%&'*+/=?^_`{|}~]+)*@umass\.edu$").unwrap();
     
-    let result : Rc<RefCell<Option<(String, String, String)>>> = Rc::new(RefCell::new(None)); 
+    let result : Rc<RefCell<Option<(String, String, String, String)>>> = Rc::new(RefCell::new(None)); 
 
     //Pass print info to GUI
     app.set_printer_settings(slint::SharedString::from(info.printer_settings));
@@ -148,8 +150,8 @@ fn gui(info : PrintInfo) -> Result<(String, String, String), slint::PlatformErro
 
     app.on_sumbit({
         let app_weak: Weak<AppWindow> = app.as_weak();
-        let result_clone: Rc<RefCell<Option<(String, String, String)>>> = result.clone();
-        move |human_name : slint::SharedString, email : slint::SharedString, filament_owner : slint::SharedString| {
+        let result_clone: Rc<RefCell<Option<(String, String, String, String)>>> = result.clone();
+        move |human_name : slint::SharedString, email : slint::SharedString, filament_owner : slint::SharedString, staff_pin : slint::SharedString| {
             let app: AppWindow = app_weak.unwrap();
 
             let mut errors: bool = false;
@@ -172,12 +174,19 @@ fn gui(info : PrintInfo) -> Result<(String, String, String), slint::PlatformErro
                 //Shoudl be impossible??
                 //Leave handling to main() 
             }
+            if !pins.contains(&staff_pin.to_string()) {
+                errors = true;
+                app.set_pin_invalid(true);
+            } else {
+                app.set_pin_invalid(false);
+            }
             
             if !errors {
                 *result_clone.borrow_mut() = Some((
                     human_name.to_string(), 
                     email.to_string(), 
-                    filament_owner.to_string()
+                    filament_owner.to_string(),
+                    staff_pin.to_string()
                 ));
                 let _ = app.hide();
             }
