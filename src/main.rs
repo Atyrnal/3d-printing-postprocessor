@@ -1,3 +1,5 @@
+#![cfg_attr(target_os = "windows", windows_subsystem = "windows")]
+
 use std::collections::HashMap;
 use std::env;
 use std::fs::{File};
@@ -6,6 +8,8 @@ use std::rc::Rc;
 use std::cell::RefCell;
 use chrono::Local;
 use uuid::Uuid;
+
+
 
 slint::include_modules!();
 
@@ -115,7 +119,7 @@ fn main() {
 
     println!("{:#?}", print);
 
-    std::io::stdin().read_line(&mut String::new()).unwrap();
+    //std::io::stdin().read_line(&mut String::new()).unwrap();
 
 }
 
