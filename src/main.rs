@@ -9,7 +9,7 @@ use uuid::Uuid;
 
 slint::include_modules!();
 
-const TARGETED_PROPERTIES : [&str; 6] = ["total filament used [g]", "filament_type", "printer_model", "printer_settings_id", "printer_notes", "estimated printing time (normal mode)"];
+const TARGETED_PROPERTIES : [&str; 6] = ["total filament used [g]", "filament_type", "printer_settings_id", "estimated printing time (normal mode)", "filament_settings_id", "print_settings_id"];
 
 #[allow(non_snake_case)]
 #[derive(Debug)]
@@ -25,6 +25,15 @@ struct Print {
     Time : String,
     UUID : String,
     Timestamp : i64
+}
+
+struct PrintInfo {
+    printer_settings : String,
+    filament_settings : String,
+    print_settings : String,
+    filename : String,
+    filament_weight : String,
+    print_time : String,
 }
 
 fn main() {
@@ -56,7 +65,20 @@ fn main() {
     #[allow(unused_variables)] //Remove eventually
     let print: Print;
 
-    match gui() {
+    let gui_info : PrintInfo = PrintInfo { 
+        printer_settings: gcode_properties[TARGETED_PROPERTIES[2]].clone(), 
+        filament_settings: gcode_properties[TARGETED_PROPERTIES[4]].clone(), 
+        print_settings: gcode_properties[TARGETED_PROPERTIES[5]].clone(), 
+        filename: {
+            let filepath: String = gcode_path.clone();
+            let fp_split = filepath.split("/").last().unwrap_or("").trim().split(".");
+            fp_split.clone().take(fp_split.count()-1).collect::<Vec<&str>>().join(".").trim().to_string()
+        }, 
+        filament_weight: format!("{}g",gcode_properties[TARGETED_PROPERTIES[0]].clone()), 
+        print_time: gcode_properties[TARGETED_PROPERTIES[3]].clone()
+    };
+
+    match gui(gui_info) {
         Ok((human_name, email, filament_owner)) => {
             print = Print {
                 HumanName : human_name,
@@ -95,10 +117,19 @@ fn main() {
 
 }
 
-fn gui() -> Result<(String, String, String), slint::PlatformError> {
+fn gui(info : PrintInfo) -> Result<(String, String, String), slint::PlatformError> {
     let app = AppWindow::new().unwrap();
 
     let result : Rc<RefCell<Option<(String, String, String)>>> = Rc::new(RefCell::new(None)); 
+
+    //Pass print info to GUI
+    app.set_printer_settings(slint::SharedString::from(info.printer_settings));
+    app.set_print_settings(slint::SharedString::from(info.print_settings));
+    app.set_filament_settings(slint::SharedString::from(info.filament_settings));
+    app.set_filament_weight(slint::SharedString::from(info.filament_weight));
+    app.set_print_time(slint::SharedString::from(info.print_time));
+    app.set_filename(slint::SharedString::from(info.filename));
+
 
     app.on_sumbit({
         let app_weak = app.as_weak();

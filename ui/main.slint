@@ -1,24 +1,127 @@
-import { LineEdit, Button } from "std-widgets.slint";
+import { LineEdit, Button, VerticalBox, CheckBox, HorizontalBox } from "std-widgets.slint";
 
 export component AppWindow inherits Window{
+    width: 640px;
+    height: 320px;
+
+    in property<string> printer_settings : "Failed to load Printer details";
+    in property<string> filament_settings : "Failed to load Filament details";
+    in property<string> print_settings : "Failed to load Process details";
+    in property<string> filename : "Failed to load File name";
+    in property<string> print_time : "Failed to load Duration";
+    in property<string> filament_weight : "Failed to load Weight";
 
     callback sumbit(string, string, string);
 
     VerticalLayout {
-        spacing : 20px;
-        padding : 50px;
-
-        human_name := LineEdit {
-            placeholder-text: "Full Name";
+        spacing : 10px;
+        padding : 30px;
+        Text {
+            text: "UMass Makerspace 3D Printing Form";
+            horizontal-alignment: center;
+            font-size: 18pt;
         }
-        email := LineEdit {
-            placeholder-text: "UMass Email";
-        }
+        HorizontalLayout {
+            spacing: 20px;
+            VerticalLayout {
+                width : 50%;
+                spacing:10px;
+                human_name := LineEdit {
+                    placeholder-text: "Full Name";
+                }
+                email := LineEdit {
+                    placeholder-text: "UMass Email";
+                }
 
+                filament_owner := HorizontalBox {
+                    padding : 0px;
+                    spacing: 10px;
+
+                    property<string> selected_option : "Makerspace";
+
+                    Text {
+                        text : "Filament Owner: ";
+                        horizontal-alignment: right;
+                    }
+
+                    mkbox := CheckBox {
+                        text : "Makerpace";
+                        checked : true;
+                        toggled => {
+                            self.checked = true;
+                            parent.selected_option = self.text;
+                            psbox.checked = false;
+                            /*if (self.checked) {
+                                parent.selected_option = self.text;
+                                psbox.checked = false;
+                            } else {
+                                parent.selected_option = psbox.text;
+                                psbox.checked = true;
+                            }*/
+                        }
+                    }
+                    psbox := CheckBox {
+                        text : "Personal";
+                        checked : false;
+                        toggled => {
+                            self.checked = true;
+                            parent.selected_option = self.text;
+                            mkbox.checked = false;
+                            /*
+                            if (self.checked) {
+                                parent.selected_option = self.text;
+                                mkbox.checked = false;
+                            } else {
+                                parent.selected_option = mkbox.text;
+                                mkbox.checked = true;
+                            }*/
+                        }
+                    }
+                }
+            }
+            VerticalLayout {
+                spacing: 5px;
+                /*Text {
+                    text : "Print Info";
+                    horizontal-alignment: center;
+                    font-size: 12pt;
+                }*/
+                Text {
+                    text : "Filename: " + root.filename;
+                    wrap : word-wrap;
+                    color : #a29e9e;
+                }
+                Text {
+                    text : "Printer: " + root.printer_settings;
+                    wrap : word-wrap;
+                    color : #a29e9e;
+                }
+                Text {
+                    text : "Filament: " + root.filament_settings;
+                    wrap : word-wrap;
+                    color : #a29e9e;
+                }
+                Text {
+                    text : "Process: " + root.print_settings;
+                    wrap : word-wrap;
+                    color : #a29e9e;
+                }
+                Text {
+                    text : "Weight: " + root.filament_weight;
+                    wrap : word-wrap;
+                    color : #a29e9e;
+                }
+                Text {
+                    text : "Duration: " + root.print_time;
+                    wrap: word-wrap;
+                    color : #a29e9e;
+                }
+            }
+        }
         sumbit_button := Button {
             text: "Submit";
             clicked => {
-                root.sumbit(human_name.text, email.text, "Makerspace");
+                root.sumbit(human_name.text, email.text, filament_owner.selected_option);
             }
         }
     }
