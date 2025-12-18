@@ -9,6 +9,22 @@ import uuid
 TARGET_PROPERTIES = ["total filament used [g]", "filament_type", "printer_settings_id", "estimated printing time (normal mode)", "filament_settings_id", "print_settings_id", "job_name"]
 
 
+def read_gcode(filepath : str) -> list[str]:
+    LINE_COUNT=600
+    with open(filepath, "rb") as f:
+        f.seek(0, 2) #Go to then end of file cuz we dont care about the rest of that shii
+        f.seek(max(0, f.tell() - LINE_COUNT * 60)) #Go back enough characters to get an average of double the lines we want
+        lines = f.read().decode("utf-8", errors="ignore").splitlines() #read lines
+        return lines[-LINE_COUNT:] #return only the last n lines 
+
+def parse_gcode(gcode_lines : list[str]) -> dict[str, str]:
+    output = {}
+    for line in gcode_lines:
+        for p in TARGET_PROPERTIES:
+            if line.startswith(f"; {p} = "):
+                output[p] = line.split("=").pop().strip()
+    return output
+
 def main():
     if len(sys.argv) < 2:
         print("Usage: post_processor <gcode filename>")
@@ -16,13 +32,8 @@ def main():
     gcode_filepath = sys.argv[1]
     if not os.path.exists(gcode_filepath):
         print("GCode file not found.")
-        sys.exit(1)
-    gcode_file = open(gcode_filepath, "r")
-    gcode_properties = {}
-    for line in gcode_file:
-        for p in TARGET_PROPERTIES:
-            if line.startswith(f"; {p} = "):
-                gcode_properties[p] = line.split("=").pop().strip()
+        sys.exit(1) 
+    gcode_properties = parse_gcode(read_gcode(gcode_filepath))
     name, email, filament_owner = gui({
         "name" : gcode_properties[TARGET_PROPERTIES[6]] if TARGET_PROPERTIES[6] in gcode_properties.keys() else "Unknown",
         "printer" : gcode_properties[TARGET_PROPERTIES[2]] if TARGET_PROPERTIES[2] in gcode_properties.keys() else "Unknown",
